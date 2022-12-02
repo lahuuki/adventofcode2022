@@ -1,0 +1,154 @@
+#' Day 02: Rock Paper Scissors
+#'
+#' [Rock Paper Scissors](https://adventofcode.com/2022/day/2)
+#'
+#' @name day02
+#' @rdname day02
+#' @details
+#'
+#' **Part One**
+#'
+#' The Elves begin to set up camp on the beach. To decide whose tent gets
+#' to be closest to the snack storage, a giant [Rock Paper
+#' Scissors](https://en.wikipedia.org/wiki/Rock_paper_scissors){target="_blank"}
+#' tournament is already in progress.
+#'
+#' Rock Paper Scissors is a game between two players. Each game contains
+#' many rounds; in each round, the players each simultaneously choose one
+#' of Rock, Paper, or Scissors using a hand shape. Then, a winner for that
+#' round is selected: Rock defeats Scissors, Scissors defeats Paper, and
+#' Paper defeats Rock. If both players choose the same shape, the round
+#' instead ends in a draw.
+#'
+#' Appreciative of your help yesterday, one Elf gives you an *encrypted
+#' strategy guide* (your puzzle input) that they say will be sure to help
+#' you win. \"The first column is what your opponent is going to play: `A`
+#' for Rock, `B` for Paper, and `C` for Scissors. The second column\--\"
+#' Suddenly, the Elf is called away to help with someone\'s tent.
+#'
+#' The second column, [you reason]{title="Why do you keep guessing?!"},
+#' must be what you should play in response: `X` for Rock, `Y` for Paper,
+#' and `Z` for Scissors. Winning every time would be suspicious, so the
+#' responses must have been carefully chosen.
+#'
+#' The winner of the whole tournament is the player with the highest score.
+#' Your *total score* is the sum of your scores for each round. The score
+#' for a single round is the score for the *shape you selected* (1 for
+#' Rock, 2 for Paper, and 3 for Scissors) plus the score for the *outcome
+#' of the round* (0 if you lost, 3 if the round was a draw, and 6 if you
+#' won).
+#'
+#' Since you can\'t be sure if the Elf is trying to help you or trick you,
+#' you should calculate the score you would get if you were to follow the
+#' strategy guide.
+#'
+#' For example, suppose you were given the following strategy guide:
+#'
+#'     A Y
+#'     B X
+#'     C Z
+#'
+#' This strategy guide predicts and recommends the following:
+#'
+#' -   In the first round, your opponent will choose Rock (`A`), and you
+#'     should choose Paper (`Y`). This ends in a win for you with a score
+#'     of *8* (2 because you chose Paper + 6 because you won).
+#' -   In the second round, your opponent will choose Paper (`B`), and you
+#'     should choose Rock (`X`). This ends in a loss for you with a score
+#'     of *1* (1 + 0).
+#' -   The third round is a draw with both players choosing Scissors,
+#'     giving you a score of 3 + 3 = *6*.
+#'
+#' In this example, if you were to follow the strategy guide, you would get
+#' a total score of *`15`* (8 + 1 + 6).
+#'
+#' *What would your total score be if everything goes exactly according to
+#' your strategy guide?*
+#'
+#' **Part Two**
+#'
+#' *(Use have to manually add this yourself.)*
+#'
+#' *(Try using `convert_clipboard_html_to_roxygen_md()`)*
+#'
+#' @param x some data
+#' @return For Part One, `f02a(x)` returns .... For Part Two,
+#'   `f02b(x)` returns ....
+#' @export
+#' @examples
+#' f02a(example_data_02())
+#' f02b(example_data_02())
+f02a <- function(x) {
+  scores <- sapply(x, f02_game_score)
+  return(sum(scores))
+}
+
+
+#' @rdname day02
+#' @export
+f02b <- function(x) {
+  games_decoded <- sapply(x, f02_game_decode)
+  return(f02a(games_decoded))
+}
+
+#' @examples
+#' f02_game_score("A Y")
+f02_game_score <- function(x) {
+  # A for Rock, B for Paper, and C for Scissors
+  op_shape = list(A = "R", B = "P", C = "S")[[substring(x, 1,1)]]
+  # X for Rock, Y for Paper, and Z for Scissors
+  my_shape = list(X = "R", Y = "P", Z = "S")[[substring(x, 3,3)]]
+
+  # message(op_shape, " vs. ", my_shape)
+
+  # 1 for Rock, 2 for Paper, and 3 for Scissors
+  shape_score = list(R = 1, P = 2, S = 3)[[my_shape]]
+
+  # 0 if you lost, 3 if the round was a draw, and 6 if you won
+  game_score = dplyr::case_when(op_shape == my_shape ~ 3, # draw
+                                my_shape == "R" & op_shape == "S" ~ 6, ## ALL wins
+                                my_shape == "S" & op_shape == "P" ~ 6,
+                                my_shape == "P" & op_shape == "R" ~ 6,
+                                TRUE ~ 0) ## loss
+
+  return(shape_score + game_score)
+}
+
+#' @examples
+#' game <- f02_game_decode("A Y")
+#' f02_game_score(game)
+f02_game_decode <- function(x) {
+  op_shape = substring(x, 1,1)
+
+  # X means you need to lose, Y means you need to end the round in a draw, and Z means you need to win
+  game_code = list(X = "lose", Y = "draw", Z = "win")[[substring(x, 3,3)]]
+
+  # message(game_code)
+  # A for Rock, B for Paper, and C for Scissors
+  # X for Rock, Y for Paper, and Z for Scissors
+  my_shape = dplyr::case_when(game_code == "draw" ~ c("X","Y","Z")[match(op_shape, LETTERS)], # draw
+                              game_code == "win" & op_shape == "A" ~ "Y", ## win vs. rock with paper
+                              game_code == "win" & op_shape == "B" ~ "Z", ## win vs. P w/ S
+                              game_code == "win" & op_shape == "C" ~ "X", ## win vs. S w/ R
+                              game_code == "lose" & op_shape == "A" ~ "Z", ## lose vs. R w/ P
+                              game_code == "lose" & op_shape == "B" ~ "X", ## lose vs. P w/ S
+                              game_code == "lose" & op_shape == "C" ~ "Y", ## lose vs. S w/ R
+                              TRUE ~ "ERROR") ## ERROR!
+
+  return(paste(op_shape, my_shape))
+}
+
+
+#' @param example Which example data to use (by position or name). Defaults to
+#'   1.
+#' @rdname day02
+#' @export
+example_data_02 <- function(example = 1) {
+  l <- list(
+    a = c("A Y",
+          "B X",
+          "C Z"
+    )
+  )
+  l[[example]]
+}
