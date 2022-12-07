@@ -133,10 +133,9 @@
 #' @export
 #' @examples
 #' f07a(example_data_07())
-#' f07b()
 f07a <- function(x) {
   elf_file_sys <- f07_build_file_sys(x)
-  elf_file_sys$Do(function(node) node$totalSize <- Aggregate(node, attribute = "size", aggFun = sum), traversal = "post-order")
+  elf_file_sys$Do(function(node) node$totalSize <- data.tree::Aggregate(node, attribute = "size", aggFun = sum), traversal = "post-order")
   # print(elf_file_sys, "size","totalSize")
   totalSize_list <- elf_file_sys$Get("totalSize")
   is_dir <- is.na(elf_file_sys$Get("size"))
@@ -147,8 +146,32 @@ f07a <- function(x) {
 
 #' @rdname day07
 #' @export
+#' @example
+#' efs <- f07_build_file_sys(example_data_07())
+#' print(efs, "size")
+#' f07b(example_data_07())
 f07b <- function(x) {
+  ## build file sys, get dir size
+  elf_file_sys <- f07_build_file_sys(x)
+  elf_file_sys$Do(function(node) node$totalSize <- data.tree::Aggregate(node, attribute = "size", aggFun = sum), traversal = "post-order")
+  # print(elf_file_sys, "size","totalSize")
+  totalSize_list <- elf_file_sys$Get("totalSize")
 
+  ## calc total space needed
+  space_used <- sum(elf_file_sys$Get("size"), na.rm = TRUE)
+  total_disk <- 70000000
+  space_needed <- 30000000
+
+  space_unused <- total_disk - space_used
+  update_space <- space_needed - space_unused
+
+  message("Space Used: ", space_used, ", Space Free: ", space_unused)
+  message("Need to delete: ", update_space)
+
+  ## Find smallest directory > update_space
+  is_dir <- is.na(elf_file_sys$Get("size"))
+  big_dirs <- totalSize_list[is_dir & totalSize_list > update_space]
+  return(big_dirs[which.min(big_dirs)])
 }
 
 #' @example
@@ -158,7 +181,7 @@ f07b <- function(x) {
 #' cn <- f07_build_file_sys(example_data_07())
 #' print(cn, "size")
 f07_build_file_sys <- function(command_list) {
-  file_sys <- Node$new("/")
+  file_sys <- data.tree::Node$new("/")
   # file_sys$AddChild("a")
   current_node <- file_sys$root
   for(c in command_list){
