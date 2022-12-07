@@ -13,7 +13,7 @@ aoc_solutions <- list(
   day05b = "RNRGDNFQG",
   day06a = 1723,
   day06b = 3708,
-  day07a = NA,
+  day07a = 1454188,
   day07b = NA,
   day08a = NA,
   day08b = NA,
