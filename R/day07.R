@@ -165,8 +165,8 @@ f07b <- function(x) {
   space_unused <- total_disk - space_used
   update_space <- space_needed - space_unused
 
-  message("Space Used: ", space_used, ", Space Free: ", space_unused)
-  message("Need to delete: ", update_space)
+  # message("Space Used: ", space_used, ", Space Free: ", space_unused)
+  # message("Need to delete: ", update_space)
 
   ## Find smallest directory > update_space
   is_dir <- is.na(elf_file_sys$Get("size"))
