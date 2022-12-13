@@ -295,21 +295,47 @@
 #' @export
 #' @examples
 #' f09a(example_data_09())
-#' f09b()
 f09a <- function(x) {
-    head_path <- f09_move_head(x)
+  head_path <- f09_move_head(x)
   # message("Head moves ", length(head_path), " times")
   tail_path <- f09_move_tail(head_path)
   # message("Tail moves ", length(tail_path), " times")
-  tail_gird <- Reduce("+", tail_path)
-  return(sum(tail_gird != 0))
+
+  return(length(unique(tail_path)))
 }
 
 
 #' @rdname day09
 #' @export
-f09b <- function(x) {
+#' @examples
+#' f09b(example_data_09(), 10)
+f09b <- function(x, rope_len) {
 
+  head_path <- f09_move_head(x)
+  # message("Head moves ", length(head_path), " times")
+  tail_path <- head_path
+  for(i in seq(rope_len)){
+    tail_path <- f09_move_tail(tail_path)
+  }
+  print(f09_vis(tail_path))
+  return(length(unique(tail_path)))
+}
+
+#' @example
+#' test <- f09_move_head(c("R 4", "U 4", "L 1"))
+#'f09_vis(test)
+#'f09_vis(f09_move_tail(test))
+f09_vis <- function(path){
+
+  path_i <- unlist(lapply(path,"[[",1))
+  path_i <- path_i +abs(min(path_i)) +1
+
+  path_j <- unlist(lapply(path,"[[",2))
+  path_j <- path_j +abs(min(path_j)) +1
+
+  Matrix::sparseMatrix(i = path_i,
+               j = path_j,
+               x= seq(length(path)))
 }
 
 
@@ -341,18 +367,18 @@ f09_move_tail <- function(head_path){
 #' @example
 #' mh <- f09_move_head(example_data_09())
 #'f09_test_tail(mh[[1]],  mh[[2]])
-#'f09_test_tail(mh[[4]],  mh[[6]])
+#'f09_test_tail(mh[[1]],  mh[[3]])
+#'f09_test_tail(mh[[4]],  mh[[6]]) #FALSE the turn happens
 f09_test_tail <- function(g1, g2){
-  g1i <- which(g1 == 1, arr.ind = TRUE)
-  g2i <- which(g2 == 1, arr.ind = TRUE)
-  row_diff <- g2i[[1]] - g1i[[1]]
-  col_diff <- g2i[[2]] - g1i[[2]]
-  # message("row:", row_diff, " col:", col_diff)
-  return(abs(row_diff) >= 2 | abs(col_diff) >=2)
+  x_diff <- g2[[1]] - g1[[1]]
+  y_diff <- g2[[2]] - g1[[2]]
+  # message("x:", x_diff, " y:", y_diff)
+  return(abs(x_diff) >= 2 | abs(y_diff) >=2)
 }
 
 
 #' @example
+#' f09_move_head(c("R 5", "U 2"))
 #' mh <- f09_move_head(example_data_09())
 #' Reduce("+", mh)
 #' mh[4:6]
@@ -360,75 +386,67 @@ f09_test_tail <- function(g1, g2){
 #'
 f09_move_head <- function(move_list, g1 = f09_grid()){
 
-  head_grids <- list(g1)
+  head_pos <- list(c(0,0))
 
   for(move in move_list){
-    new_grids <- f09_move(head_grids[[length(head_grids)]], move)
-    head_grids <- c(head_grids, new_grids)
+    # new_grids <- f09_move(head_pos[[length(head_pos)]], move)
+    move <- strsplit(move, " ")[[1]]
+    move_d <- move[[1]]
+    move_i <- as.integer(move[[2]])
+
+    for(i in seq(move_i)){
+      new_pos <- f09_move2(head_pos[[length(head_pos)]], move_d)
+      head_pos <- c(head_pos, list(new_pos))
+    }
+
   }
-  return(head_grids)
+  return(head_pos)
 }
 
-
 #' @example
-#' f09_grid()
-f09_grid <- function(rl = 250, cl = 250, nr = 500, nc = 500) {
-  grid <- matrix(data = 0, nrow = nr, ncol = nc)
-  grid[rl, cl] <- 1
-  return(grid)
+#' f09_move2(c(0,0), "U")
+#' f09_move2(c(0,0), "D")
+#' f09_move2(c(0,0), "L")
+#' f09_move2(c(0,0), "R")
+#' (g <- f09_move2(c(0,0), "R"))
+#' (g <- f09_move2(g, "U"))
+f09_move2 <- function(Hs, move_d){
+  He <-list(`x` = Hs[[1]], `y` = Hs[[2]])
+
+  if(move_d == "R"){
+    He$y <- He$y + 1
+  }else if(move_d == "L"){
+    He$y <- He$y - 1
+
+  }else if(move_d == "U"){
+    He$x <- He$x + 1
+  }else if(move_d == "D"){
+    He$x <- He$x - 1
+  } else stop("UNKOWN COMMAND")
+
+  return(c(He$x, He$y))
 }
 
 #' #' @example
-#' #' f09_grid()
-#' f09_grid <- function(rl = 250, cl = 250, nr = 500, nc = 500) {
-#' # f09_grid <- function(rl = 250, cl = 250, nr = 500, nc = 500) {
-#'   grid <- Matrix::sparseMatrix(i = seq(nr), j=seq(nc), x =0)
-#'   # grid <- Matrix::as.sparseMatrix(matrix(data = 0, nrow = nr, ncol = nc))
-#'   grid[rl, cl] <- 1
-#'   return(grid)
+#' #' g <- f09_grid()
+#' #' g2 <- f09_move(g, "R 4")
+#' #' trail_g2 <- Reduce("+", g2)
+#' #' g3 <- f09_move(g2[[length(g2)]], "U 4")
+#' #' Reduce("+", c(g2, g3))
+#' f09_move <- function(grid, move){
+#'   # print(move)
+#'   move <- strsplit(move, " ")[[1]]
+#'   move_d <- move[[1]]
+#'   move_i <- as.integer(move[[2]])
+#'
+#'   grid_list <- list(grid)
+#'   for(i in seq(move_i)){
+#'     new_grid <- f09_move2(grid_list[[length(grid_list)]], move_d)
+#'     grid_list <- c(grid_list, list(new_grid))
+#'   }
+#'   return(tail(grid_list, -1))
 #' }
 
-#' @example
-#' g <- f09_grid()
-#' g2 <- f09_move(g, "R 4")
-#' trail_g2 <- Reduce("+", g2)
-#' g3 <- f09_move(g2[[length(g2)]], "U 4")
-#' Reduce("+", c(g2, g3))
-f09_move <- function(grid, move){
-  # print(move)
-  move <- strsplit(move, " ")[[1]]
-  move_d <- move[[1]]
-  move_i <- as.integer(move[[2]])
-
-  grid_list <- list(grid)
-  for(i in seq(move_i)){
-    new_grid <- f09_move2(grid_list[[length(grid_list)]], move_d)
-    grid_list <- c(grid_list, list(new_grid))
-  }
-  return(tail(grid_list, -1))
-}
-
-#' @example
-#' g <- f09_grid()
-#' (g <- f09_move2(g, "R"))
-#' (g <- f09_move2(g, "U"))
-f09_move2 <- function(grid, move_d){
-
-  Hs <- which(grid == 1, arr.ind = TRUE)
-  He <-list(`row` = Hs[[1]], `col` = Hs[[2]])
-
-  if(move_d == "R"){
-    He$col <- He$col + 1
-  }else if(move_d == "L"){
-    He$col <- He$col - 1
-  }else if(move_d == "U"){
-    He$row <- He$row - 1
-  }else if(move_d == "D"){
-    He$row <- He$row + 1
-  } else stop("UNKOWN COMMAND")
-
-  return(f09_grid(He$row, He$col))
-}
 
 #' @param example Which example data to use (by position or name). Defaults to
 #'   1.
@@ -445,7 +463,15 @@ example_data_09 <- function(example = 1) {
       "D 1",
       "L 5",
       "R 2"
-    )
+    ),
+    b = c("R 5",
+          "U 8",
+          "L 8",
+          "D 3",
+          "R 17",
+          "D 10",
+          "L 25",
+          "U 20")
   )
   l[[example]]
 }
