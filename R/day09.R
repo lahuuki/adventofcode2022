@@ -308,15 +308,19 @@ f09a <- function(x) {
 #' @rdname day09
 #' @export
 #' @examples
-#' f09b(example_data_09(), 10)
+#' f09b(example_data_09(), 9)
+#' f09b(example_data_09(2)[1], 9)
+#' f09b(example_data_09(2), 10)
+#' f09b(example_data_09(2), 2)
+#' f09b(c("R 15"), 9)
 f09b <- function(x, rope_len) {
 
   head_path <- f09_move_head(x)
-  # message("Head moves ", length(head_path), " times")
-  tail_path <- head_path
-  for(i in seq(rope_len)){
-    tail_path <- f09_move_tail(tail_path)
-  }
+  tail_path <- f09_move_tail(head_path, l = rope_len)
+  # tail_path <- head_path
+  # for(i in seq(rope_len)){
+  #   tail_path <- f09_move_tail(tail_path)
+  # }
   print(f09_vis(tail_path))
   return(length(unique(tail_path)))
 }
@@ -343,11 +347,11 @@ f09_vis <- function(path){
 #' mh <- f09_move_head(example_data_09())
 #' mt <- f09_move_tail(mh)
 #' Reduce("+", mt)
-f09_move_tail <- function(head_path){
+f09_move_tail <- function(head_path, l = 1){
 
   tail_path <- list(head_path[[1]]) ## Start
   tail_new <- tail_path[[1]]
-  i <- 1
+  i <- l
   while(i < length(head_path)){
     # message(i)
     # print(tail_new)
